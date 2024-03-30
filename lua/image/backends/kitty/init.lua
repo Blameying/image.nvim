@@ -3,7 +3,7 @@ local helpers = require("image/backends/kitty/helpers")
 local utils = require("image/utils")
 
 local editor_tty = utils.term.get_tty()
-local is_SSH = (vim.env.SSH_CLIENT ~= nil) or (vim.env.SSH_TTY ~= nil)
+local is_SSH = true
 
 ---@type Backend
 ---@diagnostic disable-next-line: missing-fields

@@ -4,7 +4,7 @@ local utils = require("image/utils")
 local stdout = vim.loop.new_tty(1, false)
 if not stdout then error("failed to open stdout") end
 
-local is_SSH = (vim.env.SSH_CLIENT ~= nil) or (vim.env.SSH_TTY ~= nil)
+local is_SSH = true
 
 -- https://github.com/edluffy/hologram.nvim/blob/main/lua/hologram/terminal.lua#L77
 local get_chunked = function(str)

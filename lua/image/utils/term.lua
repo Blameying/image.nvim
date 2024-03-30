@@ -1,3 +1,5 @@
+local util = require("image.utils.logger")
+
 local cached_size = {
   screen_x = 0,
   screen_y = 0,
@@ -43,9 +45,70 @@ local update_size = function()
   }
 end
 
-update_size()
+local update_size_remote = function()
+  os.execute("stty -g > ~/.tty_config")
+  os.execute("stty raw")
+  local input = io.open("/dev/stdin", "r")
+  local output = io.open("/dev/stdout", "w")
+  if input == nil or output == nil then
+    util.log("Failed to open /dev/stdin or /dev/stdout")
+    return
+  end
+
+  output:write("\27[14t")
+  output:flush()
+  local response = ""
+  while true do
+    local chunk = input:read(1)
+    if chunk == nil then
+      break
+    end
+
+    response = response .. chunk
+
+    if chunk == "t" then
+      break
+    end
+  end
+
+  local _, _, height, width = string.find(response, "\27%[4;(%d+);(%d+)t")
+
+  output:write("\27[18t")
+  output:flush()
+  local col_row = ""
+
+  while true do
+    local chunk = input:read(1)
+    if chunk == nil then
+      break
+    end
+
+    col_row = col_row .. chunk
+
+    if chunk == "t" then
+      break
+    end
+  end
+  output:close()
+  input:close()
+  os.execute("stty \"$(cat ~/.tty_config)\"")
+  local _, _, row, col = string.find(col_row, "\27%[8;(%d+);(%d+)t")
+  util.log(row, col)
+
+  cached_size = {
+    screen_x = tonumber(width),
+    screen_y = tonumber(height),
+    screen_cols = tonumber(col),
+    screen_rows = tonumber(row),
+    cell_width = tonumber(width) / tonumber(col),
+    cell_height = tonumber(height) / tonumber(row),
+  }
+end
+
+
+update_size_remote()
 vim.api.nvim_create_autocmd("VimResized", {
-  callback = update_size,
+  callback = update_size_remote,
 })
 
 local get_tty = function()
